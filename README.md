@@ -290,6 +290,20 @@ alert tcp any any -> any any (msg:"Mon nom!"; content:"Rubinstein"; sid:4000015;
 
 **Reponse :**  
 
+Lorsque Snort "sniff" un paquet correspondant aux critères ci-dessous, cette règle génère une 
+alerte "Mon nom!" et écrit le paquet dans le journal :
+
+- Paquet TCP
+
+- Emis depuis n'importe quelle adresse et depuis n'importe quel port
+
+- A destination de n'importe quelle adresse et vers n'importe quel port
+
+- Contient le string "Rubinstein"
+
+- On indique pour cette première règle, que le sid et rev indiqués dans les options 
+correspondent respectivement au "snort rule id" et à la "revision id", ce qui permet simplement 
+de créer un suivi de ces règles, notamment lors du travail avec des règles d'autres gens
 ---
 
 Utiliser un éditeur et créer un fichier `myrules.rules` sur votre répertoire home. Rajouter une règle comme celle montrée avant mais avec votre nom ou un mot clé de votre préférence. Lancer snort avec la commande suivante :
@@ -298,12 +312,15 @@ Utiliser un éditeur et créer un fichier `myrules.rules` sur votre répertoire 
 sudo snort -c myrules.rules -i eth0
 ```
 
-**Question 2: Que voyez-vous quand le logiciel est lancé ? Qu'est-ce que ça vaut dire ?**
+**Question 2: Que voyez-vous quand le logiciel est lancé ? Qu'est-ce que ça veut dire ?**
 
 ---
 
 **Reponse :**  
 
+Snort se lance, analyse quelles règles sont à appliquer, la règle que nous venons de créer est
+chargée, parsée, ses filtres appliqués et l'application se met à écouter après que cette
+initialisation est complète.
 ---
 
 Aller à un site web contenant votre nom ou votre mot clé que vous avez choisi dans son text (il faudra chercher un peu pour trouver un site en http...). Ensuite, arrêter Snort avec `CTRL-C`.
@@ -314,6 +331,8 @@ Aller à un site web contenant votre nom ou votre mot clé que vous avez choisi 
 
 **Reponse :**  
 
+Pendant que Snort écoute, mis à part des messages d'erreurs continus, rien n'est affiché, par 
+contre on peut voir après interruption avec CTRL+C que des alertes ont été créées.
 ---
 
 Aller au répertoire /var/log/snort. Ouvrir le fichier `alert`. Vérifier qu'il y ait des alertes pour votre nom.
@@ -324,6 +343,12 @@ Aller au répertoire /var/log/snort. Ouvrir le fichier `alert`. Vérifier qu'il 
 
 **Reponse :**  
 
+![Found
+Robert!](images/foundRobert.png)
+
+On peut voir le sid, rev et le message liant ce message à la règle ainsi que les informations
+liées au paquet capturé (temps/date de capture, adresse&port source/destination, protocole,
+TTL, etc.
 ---
 
 
@@ -333,12 +358,24 @@ Aller au répertoire /var/log/snort. Ouvrir le fichier `alert`. Vérifier qu'il 
 
 Ecrire une règle qui journalise (sans alerter) un message à chaque fois que Wikipedia est visité **DEPUIS VOTRE** station. **Ne pas utiliser une règle qui détecte un string ou du contenu**.
 
-**Question 5: Quelle est votre règle ? Où le message a-t'il été journalisé ? Qu'est-ce qui a été journalisé ?**
+**Question 5: Quelle est votre règle ? Où le message a-t-il été journalisé ? Qu'est-ce qui a 
+été journalisé ?**
 
 ---
 
 **Reponse :**  
 
+log tcp 10.192.93.190 any -> 91.198.174.192 443
+
+Avec cette règle, on capture les paquets partant de tous nos ports vers le port 443 (HTTPS) de 
+l'adresse IP qu'on a trouvée avec ping de Wikipedia. 'log' journalise le rendu d'une capture 
+snort dans le directory var/log/snort, où elle stockée sous forme 'snort.log.xxxxx' et peut 
+être visualisée avec 'snort -r /var/log/snort/snort.log.xxxxx'
+
+![log display](images/logWikiQ5.png)
+
+On peut constater que cela correspond à l'affichage lorsqu'on interrompt un sniffing en cours 
+de Snort, en plus d'un détail par rapport  à chaque paquet capturé via notre règle 'log'.
 ---
 
 --
@@ -353,6 +390,15 @@ Ecrire une règle qui alerte à chaque fois que votre système reçoit un ping d
 
 **Reponse :**  
 
+alert icmp !10.192.93.190/24 any -> 10.192.93.190/24 any (msg:"pinged";sid:4000028;rev:1;)
+Le '!' devant notre adresse pour l'adresse source permet d'exclure uniquement notre adresse, 
+tandis que le sens de '->' permet d'inclure uniquement les messages entrant sur notre système.
+On a eu deux outputs : d'un côté un log comme précédemment vu et les messages d'alerte ont 
+également été rajouté au fichier alert en var/log/snort.
+
+![alerte ping](images/pingQ6.png)
+
+![display journal ping](images/journalQ6.png)
 ---
 
 --
@@ -367,6 +413,10 @@ Modifier votre règle pour que les pings soient détectés dans les deux sens.
 
 **Reponse :**  
 
+Le seul changement à apporter à la dernière règle est le sens de celle-ci : elle devient 
+bi-directionnelle.
+
+alert icmp !10.192.93.190/24 any <> 10.192.93.190/24 any (msg:"pinged";sid:4000029;rev:1;)
 ---
 
 
@@ -382,6 +432,13 @@ Essayer d'écrire une règle qui Alerte qu'une tentative de session SSH a été 
 
 **Reponse :**  
 
+alert tcp any any -> 10.192.93.190 22 (msg:"attempted ssh connection";sid:4000029;rev:1;)
+
+La différence principale par rapport aux règles précédentes est qu'on utilise comme port de 
+destination notre port 22 avec TCP comme protocole, correspondant à une connexion SSH, que nous 
+avons provoquée en entrant sur le terminal d'une autre machine (10.192.106.81) : ssh 10.192.93.190
+
+![alerte SSH](image/alertQ8.png)
 ---
 
 --
@@ -396,6 +453,7 @@ Lancer Wireshark et faire une capture du trafic sur l'interface connectée au br
 
 **Reponse :**  
 
+On utilise pour cela 'snort -r *filepath*'
 ---
 
 Utiliser l'option correcte de Snort pour analyser le fichier de capture Wireshark.
@@ -406,6 +464,11 @@ Utiliser l'option correcte de Snort pour analyser le fichier de capture Wireshar
 
 **Reponse :**  
 
+Snort affiche l'entiereté des trames capturées lors du fonctionnement de wireshark, avec les 
+statistiques en plus comme pour les autres trames. Puisqu'on n'a pas appliqué nos règles snort 
+avec Wireshark, aucun filtrage n'a été effectué et on voit toutes les trames, contrairement 
+aux logs capturés avec snort.
+Par contre, les alertes sont également journalisées dans le document var/log/snort/alert
 ---
 
 <sub>This guide draws heavily on http://cs.mvnu.edu/twiki/bin/view/Main/CisLab82014</sub>
