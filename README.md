@@ -423,9 +423,9 @@ Modifier votre règle pour que les pings soient détectés dans les deux sens.
 
 Le seul changement à apporter à la dernière règle est le sens de celle-ci : elle devient 
 bi-directionnelle.
-
+```
 alert icmp !10.192.93.190/24 any <> 10.192.93.190/24 any (msg:"pinged";sid:4000029;rev:1;)
-
+```
 ---
 
 
@@ -440,9 +440,9 @@ Essayer d'écrire une règle qui Alerte qu'une tentative de session SSH a été 
 ---
 
 **Reponse :**  
-
+```
 alert tcp any any -> 10.192.93.190 22 (msg:"attempted ssh connection";sid:4000029;rev:1;)
-
+```
 La différence principale par rapport aux règles précédentes est qu'on utilise comme port de 
 destination notre port 22 avec TCP comme protocole, correspondant à une connexion SSH, que nous 
 avons provoquée en entrant sur le terminal d'une autre machine (10.192.106.81) : ssh 10.192.93.190
