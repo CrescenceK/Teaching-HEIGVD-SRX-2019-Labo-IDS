@@ -447,7 +447,7 @@ La différence principale par rapport aux règles précédentes est qu'on utilis
 destination notre port 22 avec TCP comme protocole, correspondant à une connexion SSH, que nous 
 avons provoquée en entrant sur le terminal d'une autre machine (10.192.106.81) : ssh 10.192.93.190
 
-![alerte SSH](image/alertQ8.png)
+![alerte SSH](images/alertQ8.png)
 
 ---
 
